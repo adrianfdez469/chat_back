@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "dstart": "nodemon ./bin/www",
+    "start": "node ./bin/www"
   },
   "dependencies": {
     "cors": "^2.8.5",
