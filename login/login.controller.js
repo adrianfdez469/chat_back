@@ -11,7 +11,6 @@ exports.Login = async (req, resp, next) => {
             _id: user._id
         });
     }catch(err){
-        console.log(Error);
         console.log(err);
         next(err);
     }

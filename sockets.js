@@ -4,10 +4,6 @@ module.exports = {
     init: httpServer => {
         io = require('socket.io')(httpServer);
         io.on('connection', socket => {
-            console.log('client connected');
-            
-            
-
             socket.on('new user', (params) => {
                 socket._id = params._id;
                 LoginController.bindSocketIdToUser(params._id, socket.id);
@@ -15,8 +11,6 @@ module.exports = {
             });
 
             socket.on('message', ({from, toUserId, toSocketId, msg}) => {
-                console.log(msg);
-                console.log(`Llego un mensaje para el socketid ${toSocketId}`);
                 // las 2 variantes funcionana
                 //socketAll[toUserId].emit('message');
                 io.to(toSocketId).emit('message',{msg, _id: socket._id});
