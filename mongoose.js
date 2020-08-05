@@ -10,11 +10,11 @@ const port = process.env.MONGODB_ADDON_PORT || 27017;*/
 const db = config.get('db');
 mongoose
     //.connect(`mongodb://${userDb ? `${userDb}:` : ''}${passDb ? `${passDb}@` : ''}${ipDb}:${port}/${nameDb}`, {useNewUrlParser: true,  useUnifiedTopology: true })
-    .connect(db)
+    .connect(db, {useNewUrlParser: true,  useUnifiedTopology: true })
     .then(connection => {
         console.log('connected to the database');
     })
     .catch(err => {
         console.log(err);
-        console.log("ERROR durante coneccion a base de datos")
+        console.log("ERROR al conectar a la base de datos")
     });
