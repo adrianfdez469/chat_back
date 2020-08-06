@@ -1,18 +1,11 @@
 const mongoose = require('mongoose');
 const config = require('config');
 
-
-/*const ipDb = process.env.MONGODB_ADDON_HOST || 'localhost';
-const userDb = process.env.MONGODB_ADDON_USER || '';
-const passDb = process.env.MONGODB_ADDON_PASSWORD || '';
-const nameDb = process.env.MONGODB_ADDON_DB || 'chatapp';
-const port = process.env.MONGODB_ADDON_PORT || 27017;*/
 const db = config.get('db');
 mongoose
-    //.connect(`mongodb://${userDb ? `${userDb}:` : ''}${passDb ? `${passDb}@` : ''}${ipDb}:${port}/${nameDb}`, {useNewUrlParser: true,  useUnifiedTopology: true })
     .connect(db, {useNewUrlParser: true,  useUnifiedTopology: true })
     .then(connection => {
-        console.log('connected to the database');
+        console.log('La coneccion a base de datos ha sido exitosa');
     })
     .catch(err => {
         console.log(err);
