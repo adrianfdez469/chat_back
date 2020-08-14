@@ -1,4 +1,4 @@
-const UserModel = require('../models/user');
+const UserModel = require('../user/userModel');
 
 exports.Login = async (req, resp, next) => {
     try{
