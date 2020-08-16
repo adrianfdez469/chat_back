@@ -387,9 +387,9 @@ exports.refreshToken = async (req, resp, next) => {
 
 
 const friendShipStatusOptions = {
-    0: "REQUESTED",
-    1: "ASKED",
-    2: "ACEPTED",
+    1: "ACEPTED",
+    2: "REQUESTED",
+    3: "ASKED",
     4: "DECLINED",
     5: "BLOCKED"
 }
@@ -404,6 +404,7 @@ exports.searchFirends = async (req, resp, next) => {
         const friends = user.contacts.map(contact => {
             return {
                 friendShipStatusCode: friendShipStatusOptions[contact.friendShipStatus],
+                friendShipStatus: contact.friendShipStatus,
                 contactId: contact._id,
                 nickname: contact.contactId.nickname,
                 email: contact.contactId.email,
@@ -486,7 +487,7 @@ exports.sendFriendRequest = async (req, resp, next) => {
         userRequested.contacts.push({
             _id: senderId,
             contactId: senderId,
-            friendShipStatus: 1
+            friendShipStatus: 3
         });
         await userRequested.save();
         
@@ -494,11 +495,23 @@ exports.sendFriendRequest = async (req, resp, next) => {
         userSender.contacts.push({
             _id: userId,
             contactId: userId,
-            friendShipStatus: 0
+            friendShipStatus: 2
         });
         await userSender.save();
 
-        resp.status(200).json({});
+
+        
+
+        resp.status(200).json({
+            friend: {
+                friendShipStatusCode: friendShipStatusOptions[2],
+                friendShipStatus: 2,
+                contactId: userId,
+                nickname: userRequested.nickname,
+                email: userRequested.email,
+                avatarUrl: userRequested.avatarUrl
+            }
+        });
 
 
     } catch (error) {
@@ -517,11 +530,11 @@ exports.acceptFriendRequest = async (req, resp, next) => {
             error.statusCode = 404;
             throw error;
         }
-        acceptedUser.contacts.id(userId).friendShipStatus = 2;
+        acceptedUser.contacts.id(userId).friendShipStatus = 1;
         await acceptedUser.contacts.id(userId).save();
 
         const user = await UserModel.findById(userId);
-        user.contacts.id(acceptedUserId).friendShipStatus = 2;
+        user.contacts.id(acceptedUserId).friendShipStatus = 1;
         await user.save();
 
         resp.status(200).json({});
