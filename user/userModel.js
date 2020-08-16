@@ -28,8 +28,24 @@ const userSchema = new Schema({
     language: String,
     gender: String,
     avatarUrl: String,
-    socketId: String
+    waitingNewPass: {
+        type: Boolean,
+        default: false
+    },
+    refresh_token: String,
+    refresh_token_expires: Date,
+    socketId: String,
+
+    contacts: [{
+        contactId: {type: Schema.Types.ObjectId, required: true, ref: "User"},
+        friendShipStatus: {
+            type: Number, default: 0
+        }
+    }]
+
 });
+
+
 
 module.exports = mongoose.model("User", userSchema);
 

@@ -2,7 +2,7 @@
     "db":"db_path",
     "frontEndUrl": "frontUrl",
     "mail_api_token": "mail_api_token",
-    "jwtSecrete": "jwt_private",
+    "jwtSecret": "jwt_private",
     "refresh_token_expires": "REFRESH_TOKEN_EXPIRES_MINUTES",
     "jwt_token_expires": "JWT_TOKEN_EXPIRES_MINUTES" 
 }

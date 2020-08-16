@@ -40,7 +40,7 @@ const send = (email, paramsObj, templateId) => {
             'X-Mailin-custom': 'custom_header_1:custom_value_1|custom_header_2:custom_value_2'
         }
     };
-console.log(sendSmtpEmail);
+    console.log(sendSmtpEmail);
     if(!config.has("dev")){
         apiInstance.sendTransacEmail(sendSmtpEmail)
             .then(data => {
