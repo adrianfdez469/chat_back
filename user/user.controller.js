@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const ObjectId = require('mongoose').Types.ObjectId;
 
 const helper = require('../helpers/helpers');
 const UserModel = require('./userModel');
@@ -391,15 +392,24 @@ const friendShipStatusOptions = {
     2: "REQUESTED",
     3: "ASKED",
     4: "DECLINED",
-    5: "BLOCKED"
+    5: "BLOCKED",
+    6: "DELETED"
 }
+
+/*
+    1- ACEPTED -> Eliminar, Bloquear
+    2- REQUESTED -> Decline, Bolquear
+    3- ASKED -> Aceptar, Decline, bloquear
+    4- DECLINED -> Decline, Bloquear
+    5- Blocked -> Eliminar
+    
+*/
 
 exports.searchFirends = async (req, resp, next) => {
     try {
         const userId = req.userId;
 
         const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl').execPopulate();
-        console.log(user.contacts);
         
         const friends = user.contacts.map(contact => {
             return {
@@ -427,7 +437,6 @@ exports.searchContact = async (req, resp, next) => {
         
         const userId = req.userId;
         const {stringPattern, start, limit} = req.body;
-        console.log(stringPattern);
         const users = await UserModel
             .find({
                 $and: [
@@ -450,15 +459,26 @@ exports.searchContact = async (req, resp, next) => {
             .filter(user => {
                 return currentUser.contacts.findIndex(cta => cta._id.toString() === user._id.toString()) < 0;
             })
+            // Quitando los que tengo en la lista negra
+            .filter(user => {
+                return currentUser.blackList.findIndex(cta => cta._id.toString() === user._id.toString()) < 0;
+            })
             .map(user => {
-                return {
+                const obj = {
                     userId:user._id,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email,
                     nickname: user.nickname,
-                    avatarUrl: user.avatarUrl
+                    avatarUrl: user.avatarUrl                    
                 };
+                // Para saber si este posible contacto esta bloqueando al usuario
+                const idx = user.blackList.findIndex(bloked => bloked._id.toString() === userId);
+                if(idx >= 0)
+                    obj.blockinguser = true;
+                else
+                    obj.blockinguser = false;
+                return obj;
             });
             //console.log(respObj);
             
@@ -499,9 +519,6 @@ exports.sendFriendRequest = async (req, resp, next) => {
         });
         await userSender.save();
 
-
-        
-
         resp.status(200).json({
             friend: {
                 friendShipStatusCode: friendShipStatusOptions[2],
@@ -519,9 +536,10 @@ exports.sendFriendRequest = async (req, resp, next) => {
     }
 }
 
+// Ver que hacer si te bloquea antes de aceptar la solicitud (Probar por la app)
 exports.acceptFriendRequest = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        const userId = req.userId;
         const {acceptedUserId} = req.body;
 
         const acceptedUser = await UserModel.findById(acceptedUserId);
@@ -530,14 +548,39 @@ exports.acceptFriendRequest = async (req, resp, next) => {
             error.statusCode = 404;
             throw error;
         }
-        acceptedUser.contacts.id(userId).friendShipStatus = 1;
-        await acceptedUser.contacts.id(userId).save();
+        
+        const acIdx = acceptedUser.contacts.findIndex(contact => contact._id.toString() === userId.toString());
+        if(acIdx < 0){
+            const error = new Error('Contacto no encontrado');
+            error.statusCode = 404;
+            throw error;
+        }
+        acceptedUser.contacts[acIdx].friendShipStatus = 1;
+
 
         const user = await UserModel.findById(userId);
-        user.contacts.id(acceptedUserId).friendShipStatus = 1;
-        await user.save();
+        
+        const ucIdx = user.contacts.findIndex(contact => contact._id.toString() === acceptedUserId.toString())
+        if(ucIdx < 0){
+            const error = new Error('Contacto no encontrado');
+            error.statusCode = 404;
+            throw error;
+        }
+        user.contacts[ucIdx].friendShipStatus = 1;
 
-        resp.status(200).json({});
+        await acceptedUser.save();
+        await user.save();
+        
+        resp.status(200).json({
+            friend: {
+                friendShipStatusCode: friendShipStatusOptions[1],
+                friendShipStatus: 1,
+                contactId: acceptedUserId,
+                nickname: acceptedUser.nickname,
+                email: acceptedUser.email,
+                avatarUrl: acceptedUser.avatarUrl
+            }
+        });
 
 
     } catch (error) {
@@ -545,6 +588,11 @@ exports.acceptFriendRequest = async (req, resp, next) => {
     }
 }
 
+/*
+    2- REQUESTED -> Decline, Bolquear
+    3- ASKED -> Aceptar, Decline, bloquear
+    
+*/
 exports.declineFriendRequest = async (req, resp, next) => {
     try {
         const {userId} = req;
@@ -552,30 +600,60 @@ exports.declineFriendRequest = async (req, resp, next) => {
 
         const declinedUser = await UserModel.findById(declinedUserId);
         if(!declinedUser){
+            const error = new Error('Contact not found');
+            error.statusCode = 404;
+            throw error;
+        }
+        const declined_user_ctact_index = declinedUser.contacts.findIndex(contact => contact._id.toString() === userId);
+        if(declined_user_ctact_index < 0){
             const error = new Error('User not found');
             error.statusCode = 404;
             throw error;
         }
-        declinedUser.contacts.id(userId).friendShipStatus = 4; //Declined
-        await declinedUser.contacts.id(userId).save();
+        
 
         const user = await UserModel.findById(userId);
-        await user.contacts.id(declinedUserId).remove();
-        
+        if(!user){
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+        const user_ctact_index = user.contacts.findIndex(contact => contact._id.toString() === declinedUserId.toString());
 
-        resp.status(200).json({});
+        //Situacion 1: user->envio solicitud, y estando esta en espera la cancela        
+        if(user.contacts[user_ctact_index].friendShipStatus === 2 && declinedUser.contacts[declined_user_ctact_index].friendShipStatus === 3){
+            // Borrar contactos de los dos usuarios
+            await UserModel.findByIdAndUpdate(userId, {
+                $pull:{
+                    contacts: {_id: new ObjectId(declinedUserId)}
+                }
+            });
+            await UserModel.findByIdAndUpdate(declinedUserId, {
+                $pull:{
+                    contacts: {_id: new ObjectId(userId)}
+                }
+            });
 
+            return resp.status(200).json({
+                "action": "DELETED"   
+            });
+        } 
 
-    } catch (error) {
-        next(error);
-    }
-}
+        //Situacion 2: user-> recibio la solicitud, y la cancela sin aceptarla
+        if(user.contacts[user_ctact_index].friendShipStatus === 3 && declinedUser.contacts[declined_user_ctact_index].friendShipStatus === 2){
+            // Del usuario que recibio la solicitud borro el contacto del que se la envio, y del usuario que encio la solicitud cambio el estado a DECLINED
+            await UserModel.findByIdAndUpdate(userId, {
+                $pull:{
+                    contacts: {_id: new ObjectId(declinedUserId)}
+                }
+            });
+            declinedUser.contacts[declined_user_ctact_index].friendShipStatus = 4;
+            await declinedUser.save();
 
-
-exports.blockUser = async (req, resp, next) => {
-    try {
-        
-        throw new Error('Not implemented!');
+            return resp.status(200).json({
+                "action": "DELETED" 
+            });
+        }
 
     } catch (error) {
         next(error);
@@ -585,8 +663,83 @@ exports.blockUser = async (req, resp, next) => {
 
 exports.deleteContact = async (req, resp, next) => {
     try {
-        
-        throw new Error('Not implemented!');
+        const {userId} = req;
+        const {deletedUserId} = req.body;
+
+        if(!deletedUserId){
+            const error = new Error('No user found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const user = await UserModel.findByIdAndUpdate(userId, {
+            $pull:{
+                contacts: {_id: new ObjectId(deletedUserId)}
+            }
+        });
+        if(!user){
+            const error = new Error('No user found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const deletedUser = await UserModel.findById(deletedUserId);
+        const index = deletedUser.contacts.findIndex(contact => contact._id.toString() === userId.toString());
+        if(index >= 0 && deletedUser.contacts[index].friendShipStatus === 1){
+            deletedUser.contacts[index].friendShipStatus = 6; //DELETED
+            await deletedUser.save();
+        }
+
+        resp.status(200).json({
+            "action": "DELETED"
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+/*
+    1- ACEPTED -> Eliminar, Bloquear
+    2- REQUESTED -> Decline, Bolquear
+    3- ASKED -> Aceptar, Decline, bloquear
+    4- DECLINED -> Decline, Bloquear ----
+*/
+exports.blockUser = async (req, resp, next) => {
+    try {
+        const {userId} = req;
+        const {blokedUserId} = req.body;
+
+        const user = await UserModel.findByIdAndUpdate(userId, {
+            $pull:{
+                contacts: {_id: new ObjectId(blokedUserId)}
+            },
+            $push: {
+                blackList: {_id: new ObjectId(blokedUserId), contactId: new ObjectId(blokedUserId)}
+            }
+        });
+        if(!user){
+            const error = new Error('User not found');
+            error.statusCode(404);
+            throw error;
+        }
+
+        const blokedUser = await UserModel.findById(blokedUserId);
+        if(!blokedUser){
+            const error = new Error('Bloked user not found');
+            error.statusCode(404);
+            throw error;
+        }
+        const bloquer_index = blokedUser.contacts.findIndex(contact => contact._id.toString() === userId);
+        if(bloquer_index >= 0){
+            blokedUser.contacts[bloquer_index].friendShipStatus = 5; //BLOQUED
+            await blokedUser.save();
+        }
+
+        resp.status(200).json({
+            "action": "BLOKED"
+        });
+
 
     } catch (error) {
         next(error);

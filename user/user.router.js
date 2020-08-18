@@ -19,8 +19,8 @@ router.post('/searchContact', isAuthMiddleware.isAuth, UserController.searchCont
 router.post('/sendFriendRequest', isAuthMiddleware.isAuth, UserController.sendFriendRequest);
 router.post('/acceptFriendRequest', isAuthMiddleware.isAuth, UserController.acceptFriendRequest);
 router.post('/declineFriendRequest', isAuthMiddleware.isAuth, UserController.declineFriendRequest);
-router.post('/blockUser', isAuthMiddleware.isAuth, UserController.blockUser);
 router.post('/deleteContact', isAuthMiddleware.isAuth, UserController.deleteContact);
+router.post('/blockUser', isAuthMiddleware.isAuth, UserController.blockUser);
 
 
 

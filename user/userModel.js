@@ -35,13 +35,15 @@ const userSchema = new Schema({
     refresh_token: String,
     refresh_token_expires: Date,
     socketId: String,
-
     contacts: [{
         contactId: {type: Schema.Types.ObjectId, required: true, ref: "User"},
         friendShipStatus: {
             type: Number, default: 0
         }
-    }]
+    }],
+    blackList: [
+        {contactId: {type: Schema.Types.ObjectId, required: true, ref: "User"}}
+    ]
 
 });
 
