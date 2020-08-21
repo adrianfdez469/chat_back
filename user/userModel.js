@@ -44,7 +44,6 @@ const userSchema = new Schema({
     blackList: [
         {contactId: {type: Schema.Types.ObjectId, required: true, ref: "User"}}
     ]
-
 });
 
 

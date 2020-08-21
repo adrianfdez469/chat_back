@@ -408,24 +408,61 @@ const friendShipStatusOptions = {
 exports.searchFirends = async (req, resp, next) => {
     try {
         const userId = req.userId;
+        const specificFriend = req.body.friendId;
 
         const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl').execPopulate();
         
-        const friends = user.contacts.map(contact => {
-            return {
-                friendShipStatusCode: friendShipStatusOptions[contact.friendShipStatus],
-                friendShipStatus: contact.friendShipStatus,
-                contactId: contact._id,
-                nickname: contact.contactId.nickname,
-                email: contact.contactId.email,
-                avatarUrl: contact.contactId.avatarUrl
-            };
-        })
-        
+        const friends = user.contacts
+                .map(contact => {
+                    return {
+                        friendShipStatusCode: friendShipStatusOptions[contact.friendShipStatus],
+                        friendShipStatus: contact.friendShipStatus,
+                        contactId: contact._id,
+                        nickname: contact.contactId.nickname,
+                        email: contact.contactId.email,
+                        avatarUrl: contact.contactId.avatarUrl
+                    };
+                });
 
         resp.status(200).json({
             friends: friends
         })
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.getFriendById = async (req, resp, next) => {
+    try {
+        const userId = req.userId;
+        const {friendId} = req.body;
+
+        const user = await UserModel.findById(userId);
+        console.log(user);
+        console.log(friendId);
+        const idx = user.contacts.findIndex(contact => contact._id.toString() === friendId);
+        if(idx < 0){
+            const error = new Error('No contact found');
+            error.statusCode = 404;
+            throw error;
+        }
+        await user.populate(`contacts.${idx}.contactId`,'email nickname avatarUrl').execPopulate();
+        
+        const friend = { 
+            friendShipStatus: user.contacts[idx].friendShipStatus, 
+            friendShipStatusCode: friendShipStatusOptions[user.contacts[idx].friendShipStatus],
+            contactId: user.contacts[idx]._id, 
+            nickname: user.contacts[idx].contactId.nickname,
+            email: user.contacts[idx].contactId.email,
+            avatarUrl: user.contacts[idx].contactId.avatarUrl
+        };
+        
+        
+        resp.status(200).json({
+            "friend": friend
+        })
+        
 
     } catch (error) {
         next(error);
@@ -745,6 +782,17 @@ exports.blockUser = async (req, resp, next) => {
         next(error);
     }
 }
+
+exports.sendMessage = async (req, resp, next) => {
+
+}
+
+exports.markMessageAsSeen = async (req, resp, next) => {
+
+}
+
+
+
 /*
 exports.getConectedUsers = async (req, resp, next) => {
     const users = await UserModel.find({})
