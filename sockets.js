@@ -93,10 +93,36 @@ module.exports = {
                 }
             });
 
-            socket.on('send message', ({content, userOriginId, userDestinyId, toSocketId,token}) => {
-                const isValid = messageService.sendMessage(content, userOriginId, userDestinyId, token);
+             socket.on('send message', async ({content, userOriginId, userDestinyId, toSocketId,token}) => {
+                const message = await messageService.sendMessage(content, userOriginId, userDestinyId, token);
+                if(message){
+                    console.log(message);
+                    io.to(toSocketId).emit('recived message',{
+                        content: content, 
+                        userOriginId: userOriginId,
+                        socketIdSender: socket.id,
+                        messageId: message._id,
+                        datetime: message.datetime,
+                        state: 0,
+                        sender: false
+                    });  
+
+                    io.to(socket.id).emit('recived message', {
+                        content: content, 
+                        userOriginId: userDestinyId,
+                        socketIdSender: socket.id,
+                        messageId: message._id,
+                        datetime: message.datetime,
+                        state: 2,
+                        sender: true
+                    })
+                }
+            });
+
+            socket.on('read messages', ({readerId, messengerId, messengerSocketId, token}) => {
+                const isValid = validateSocketEvent(token, readerId);
                 if(isValid){
-                    io.to(toSocketId).emit('sended message',{msg, socketId: socket.id});      
+                    //io.to(messengerSocketId).emit('readed messages', {});
                 }
             });
             

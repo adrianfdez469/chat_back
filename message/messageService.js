@@ -12,12 +12,13 @@ exports.sendMessage = async (content, userOriginId, userDestinyId, token) => {
         const message = new MessageModel({
             content: content, 
             userOrigin: userOriginId,
-            userDestiny: userDestinyId
+            userDestiny: userDestinyId,
+            datetime: new Date()
         });
 
         await message.save();
 
-        return true;
+        return message;
         
     } catch (error) {
         console.log(error);
@@ -51,6 +52,3 @@ exports.markMessageAsReaded = async (userOriginId, userDestinyId, token) => {
     }
 }
 
-const validateToken = (token) => {
-    return true;
-}

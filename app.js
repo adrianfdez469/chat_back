@@ -6,6 +6,7 @@ const path = require('path');
 
 //const LoginRouter = require('./login/login.router');
 const UserRouter = require('./user/user.router');
+const MessageRouter = require('./message/message.router');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 app.use(cors());
 
 app.use('/users', UserRouter);
+app.use('/messages', MessageRouter);
 
 app.get('/*', (req,resp) => {
   resp.sendFile(path.join(__dirname, 'build', 'index.html'));
