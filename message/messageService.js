@@ -26,23 +26,24 @@ exports.sendMessage = async (content, userOriginId, userDestinyId, token) => {
     }
 }
 
-exports.markMessageAsReaded = async (userOriginId, userDestinyId, token) => {
+exports.markMessageAsReaded = async (userId, contactId, token) => {
     try {
+        if(!userId || !contactId || !token){
+            return false;
+        }
+
         const userIdFromToken = getUserIdFromToken(token);
-        if(userOriginId.toString() !== userIdFromToken.toString()){
+        if(userId.toString() !== userIdFromToken.toString()){
             throw Error(`El idusuario del token (${userIdFromToken}) no coincide con el que se recive por parametros (${userOriginId})`);
         }
 
-        const messages = await MessageModel.find({
-            userOrigin: ObjectId(userDestinyId),
-            userDestiny: ObjectId(userOriginId),
+        await MessageModel.updateMany({
+            userOrigin: ObjectId(contactId),
+            userDestiny: ObjectId(userId),
             readed: false
+        }, {
+            readed: true
         });
-
-        for (let index = 0; index < messages.length; index++) {
-            messages[index].readed = true;
-        }
-        await messages.save();
 
         return true;
          

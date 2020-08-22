@@ -15,6 +15,7 @@ router.post('/logout', isAuthMiddleware.isAuthMiddleware, UserController.refresh
 
 
 router.post('/searchFirends', isAuthMiddleware.isAuthMiddleware, UserController.searchFirends);
+router.post('/getContactData', isAuthMiddleware.isAuthMiddleware, UserController.getContactData);
 router.post('/getFriendById', isAuthMiddleware.isAuthMiddleware, UserController.getFriendById);
 router.post('/searchContact', isAuthMiddleware.isAuthMiddleware, UserController.searchContact);
 router.post('/sendFriendRequest', isAuthMiddleware.isAuthMiddleware, UserController.sendFriendRequest);

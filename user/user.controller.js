@@ -8,6 +8,7 @@ const ObjectId = require('mongoose').Types.ObjectId;
 
 const helper = require('../helpers/helpers');
 const UserModel = require('./userModel');
+const MessageModel = require('../message/messageModel');
 const {send, emailTemplates} = require('../helpers/sendmail');
 
 exports.signUp = async (req, resp, next) => {
@@ -427,6 +428,44 @@ exports.searchFirends = async (req, resp, next) => {
         resp.status(200).json({
             friends: friends
         })
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.getContactData = async (req, resp, next) => {
+    try {
+        const {userId} = req;
+
+        const user = await UserModel.findById(userId);
+
+        const contactsWithMsg = await user.contacts.reduce(async (acum, contact) => {
+            const cant = await MessageModel.countDocuments(
+                {
+                    userDestiny: ObjectId(userId), 
+                    userOrigin: ObjectId(contact._id),
+                    readed: false
+                }
+            );
+            const lastMsg = await MessageModel.findOne({
+                userDestiny: ObjectId(userId), 
+                userOrigin: ObjectId(contact._id)
+            }, {}, {
+                sort: {datetime: -1}
+            })
+            console.log(`${contact.nickname} con ${cant} mensajes, el ultimo mensaje fue "${lastMsg.content}" enviado a las ${lastMsg.datetime}`);
+            let obj = {...acum};
+            obj[contact._id] = {cantidad: cant, lastMessage: lastMsg.content, datetime: lastMsg.datetime};
+            return obj;
+        }, {});
+
+        console.log(contactsWithMsg);
+        
+
+        resp.status(200).json({
+            contactsData:  contactsWithMsg
+        });
 
     } catch (error) {
         next(error);

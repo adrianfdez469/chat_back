@@ -93,36 +93,35 @@ module.exports = {
                 }
             });
 
-             socket.on('send message', async ({content, userOriginId, userDestinyId, toSocketId,token}) => {
+             socket.on('send message', async ({content, userOriginId, userDestinyId, toSocketId,token, consecutive}) => {
                 const message = await messageService.sendMessage(content, userOriginId, userDestinyId, token);
                 if(message){
-                    console.log(message);
                     io.to(toSocketId).emit('recived message',{
                         content: content, 
                         userOriginId: userOriginId,
                         socketIdSender: socket.id,
                         messageId: message._id,
-                        datetime: message.datetime,
-                        state: 0,
-                        sender: false
+                        datetime: message.datetime
                     });  
 
-                    io.to(socket.id).emit('recived message', {
-                        content: content, 
-                        userOriginId: userDestinyId,
-                        socketIdSender: socket.id,
+                    io.to(socket.id).emit('saved message', {
+                        contactId: userDestinyId,
+                        soketIdContact: socket.id,
                         messageId: message._id,
                         datetime: message.datetime,
-                        state: 2,
-                        sender: true
-                    })
+                        consecutive: consecutive
+                    });
                 }
             });
 
-            socket.on('read messages', ({readerId, messengerId, messengerSocketId, token}) => {
-                const isValid = validateSocketEvent(token, readerId);
+            socket.on('read messages', async ({userId, contactId, notifyTo, token}) => {
+                
+                const isValid = await messageService.markMessageAsReaded(userId, contactId, token);
                 if(isValid){
-                    //io.to(messengerSocketId).emit('readed messages', {});
+                    
+                    io.to(notifyTo).emit('readed messages', {
+                        contactId: userId
+                    });
                 }
             });
             
