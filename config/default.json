@@ -4,5 +4,5 @@
     "frontEndUrl": "http://localhost:3000",
     "jwtSecret": "AeR54Tg8uSsW1EDS96f4fR7E3OgCS5TGF39FMOa2",
     "refresh_token_expires": 10080,
-    "jwt_token_expires": 10
+    "jwt_token_expires": 15
 }

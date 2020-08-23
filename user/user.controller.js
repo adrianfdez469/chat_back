@@ -338,13 +338,13 @@ exports.refreshToken = async (req, resp, next) => {
     try{
 
         const {
-            expiredToken,
+            token,
             refresh_token
         } = req.body; 
     
-        const decodedExpiredToken = jwt.decode(expiredToken.split(' ')[1]);
-        console.log(decodedExpiredToken);
-        const userId = decodedExpiredToken.userId;
+        const docodedToken = jwt.verify(token.split(' ')[1], config.get('jwtSecret') );
+        const userId = docodedToken.userId;
+
 
         const user = await UserModel.findById(userId);
         if(user.refresh_token !== refresh_token){
