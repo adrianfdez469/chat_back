@@ -61,7 +61,6 @@ exports.signUp = async (req, resp, next) => {
         });
 
     } catch(err){
-        console.log(err);
         return next(err);
     }
 }
@@ -72,7 +71,6 @@ exports.activateUser = async (req, resp, next) => {
         const {token, language, gender, nickname, avatar} = req.body;
         
         const decodedToken = jwt.verify(token, config.get('jwtSecret'));
-        console.log(decodedToken);
         if(!decodedToken){
             const error = new Error("Invalid token");
             error.statusCode = 403;
@@ -246,7 +244,6 @@ exports.loginByToken = async (req, resp, next) => {
         const {token} = req.body;
         const realToken = token.split(' ')[1];
         const decodedToken = jwt.verify(realToken, config.get('jwtSecret'));
-        console.log(decodedToken);
         if(!decodedToken){
             const error = new Error("Invalid token");
             error.statusCode = 403;
@@ -454,14 +451,11 @@ exports.getContactData = async (req, resp, next) => {
             }, {}, {
                 sort: {datetime: -1}
             })
-            console.log(`${contact.nickname} con ${cant} mensajes, el ultimo mensaje fue "${lastMsg.content}" enviado a las ${lastMsg.datetime}`);
+            
             let obj = {...acum};
             obj[contact._id] = {cantidad: cant, lastMessage: lastMsg.content, datetime: lastMsg.datetime};
             return obj;
         }, {});
-
-        console.log(contactsWithMsg);
-        
 
         resp.status(200).json({
             contactsData:  contactsWithMsg
@@ -478,8 +472,6 @@ exports.getFriendById = async (req, resp, next) => {
         const {friendId} = req.body;
 
         const user = await UserModel.findById(userId);
-        console.log(user);
-        console.log(friendId);
         const idx = user.contacts.findIndex(contact => contact._id.toString() === friendId);
         if(idx < 0){
             const error = new Error('No contact found');
