@@ -17,6 +17,8 @@ const validateSocketEvent = (token, senderId) => {
     }
 }
 
+const disconnected = [];
+
 module.exports = {
     init: httpServer => {
         io = require('socket.io')(httpServer);
@@ -26,11 +28,19 @@ module.exports = {
 
                 socket.userId = params.userId;
                 socket.broadcast.emit('new user', {...params, socketId: socket.id});
-                
+                const index = disconnected.findIndex(id => id === socket.id);
+                if(index >= 0) disconnected.splice(index, 1);
+
+
                 io.clients((error, clients) => {
                     if(error) throw error;
                     const dataClients = clients
                         .filter(client => client !== socket.id)
+                        .filter(client => {
+                            const idx = disconnected.findIndex(id => id === client);
+                            if(idx >= 0) return false;
+                            return true;
+                        })
                         .map(client => {
                             const {userId: userId, id:socketId} = io.of('/').connected[client]
                             return {userId, socketId};
@@ -41,9 +51,13 @@ module.exports = {
             
             socket.on('disconnect', async (params) => {
                 socket.broadcast.emit('user disconnect', {socketId: socket.id});
+                const index = disconnected.findIndex(id => id === socket.id);
+                if(index >= 0)
+                    disconnected.splice(index, 1);
             });
             socket.on('logout', async (params) => {
                 socket.broadcast.emit('user disconnect', {socketId: socket.id});
+                disconnected.push(socket.id);
             });
             
 
