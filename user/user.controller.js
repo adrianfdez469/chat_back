@@ -139,7 +139,8 @@ exports.forgotPassword = async (req, resp, next) => {
         const token = jwt.sign({
             email: email,
             userId: user._id.toString(),
-            random: bcrypt.genSaltSync()
+            random: bcrypt.genSaltSync(),
+            resetPass: true
         },privateKey, {
             expiresIn: '3h'
         });
@@ -186,18 +187,20 @@ exports.resetPassword = async (req, resp,next) => {
             throw error;
         }
 
-        if(user.waitingNewPass === false){
-            const error = new Error("You can only use this link once");
-            error.statusCode = 403;
-            throw error;
+        if(decodedToken.resetPass){
+            if(user.waitingNewPass === false){
+                const error = new Error("You can only use this link once");
+                error.statusCode = 403;
+                throw error;
+            }
+    
+            if(decodedToken.email !== user.email){
+                const error = new Error("Invalid token");
+                error.statusCode = 403;
+                throw error;
+            }
         }
-
-        if(decodedToken.email !== user.email){
-            const error = new Error("Invalid token");
-            error.statusCode = 403;
-            throw error;
-        }
-
+        
         const hashPass = await bcrypt.hash(password, 12);
         user.password = hashPass;
         user.waitingNewPass = false;
@@ -366,7 +369,7 @@ exports.refreshToken = async (req, resp, next) => {
             expitationdate: jwt_token_expiry,
             random: bcrypt.genSaltSync()
         }, config.get('jwtSecret'), 
-        {expiresIn: config.get('jwt_token_expires') * 60}); // Dura 10 minutos        
+        {expiresIn: config.get('jwt_token_expires') * 60});    
         
         const refreshToken  = bcrypt.genSaltSync();
         const refresh_token_exp = new Date(new Date().getTime() +  (config.get('refresh_token_expires') * 60 * 1000));
@@ -840,5 +843,37 @@ exports.changeUserLanguage = async (req, resp, next) => {
 
     } catch (error) {
         next(error);
+    }
+}
+
+
+exports.changePassword = async (req, resp,next) => {
+    try {
+        const {userId} = req;
+        const {oldPassword, password} = req.body;
+        
+        const user = await UserModel.findById(userId);
+        if(!user){
+            const error = new Error("Error: User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        if(!bcrypt.compareSync(oldPassword, user.password)){
+            const error = new Error("Wrong Current Pass ");
+            error.statusCode = 403;
+            throw error;
+        }
+
+        const hashPass = await bcrypt.hash(password, 12);
+        user.password = hashPass;
+        await user.save();
+
+        resp.status(200).json({
+            msg: "Password changed"
+        });
+        
+    } catch (err) {
+        next(err);
     }
 }

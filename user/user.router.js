@@ -25,6 +25,7 @@ router.post('/deleteContact', isAuthMiddleware.isAuthMiddleware, UserController.
 router.post('/blockUser', isAuthMiddleware.isAuthMiddleware, UserController.blockUser);
 
 router.post('/changeUserLanguage', isAuthMiddleware.isAuthMiddleware, UserController.changeUserLanguage);
+router.post('/changePassword', isAuthMiddleware.isAuthMiddleware, UserController.changePassword);
 
 
 
