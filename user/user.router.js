@@ -24,6 +24,8 @@ router.post('/declineFriendRequest', isAuthMiddleware.isAuthMiddleware, UserCont
 router.post('/deleteContact', isAuthMiddleware.isAuthMiddleware, UserController.deleteContact);
 router.post('/blockUser', isAuthMiddleware.isAuthMiddleware, UserController.blockUser);
 
+router.post('/changeUserLanguage', isAuthMiddleware.isAuthMiddleware, UserController.changeUserLanguage);
+
 
 
 //router.get('/user',UserController.getConectedUsers);
