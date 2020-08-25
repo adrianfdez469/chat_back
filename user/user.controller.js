@@ -39,7 +39,8 @@ exports.signUp = async (req, resp, next) => {
         const privateKey = config.get('jwtSecret');
         const token = jwt.sign({
             userId: user._id.toString(),
-            email: email
+            email: email,
+            random: bcrypt.genSaltSync()
         }, privateKey);
 
 
@@ -137,7 +138,8 @@ exports.forgotPassword = async (req, resp, next) => {
         const privateKey = config.get('jwtSecret');
         const token = jwt.sign({
             email: email,
-            userId: user._id.toString()
+            userId: user._id.toString(),
+            random: bcrypt.genSaltSync()
         },privateKey, {
             expiresIn: '3h'
         });
@@ -216,7 +218,8 @@ const getLoginData = user => {
         const jwt_token_expiry = new Date(new Date().getTime() +  (config.get('jwt_token_expires') * 60 * 1000));
         const jwt_token = 'Bearer ' +  jwt.sign({
             userId: user._id,
-            expitationdate: jwt_token_expiry
+            expitationdate: jwt_token_expiry,
+            random: bcrypt.genSaltSync()
         }, config.get('jwtSecret'), 
         {expiresIn: config.get('jwt_token_expires') * 60}); // Dura 10 minutos   
         
@@ -360,7 +363,8 @@ exports.refreshToken = async (req, resp, next) => {
         const jwt_token_expiry = new Date(new Date().getTime() +  (config.get('jwt_token_expires') * 60 * 1000));
         const jwt_token = 'Bearer ' + jwt.sign({
             userId: user._id,
-            expitationdate: jwt_token_expiry
+            expitationdate: jwt_token_expiry,
+            random: bcrypt.genSaltSync()
         }, config.get('jwtSecret'), 
         {expiresIn: config.get('jwt_token_expires') * 60}); // Dura 10 minutos        
         
