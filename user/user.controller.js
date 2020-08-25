@@ -450,11 +450,16 @@ exports.getContactData = async (req, resp, next) => {
                 userOrigin: ObjectId(contact._id)
             }, {}, {
                 sort: {datetime: -1}
-            })
+            });
             
             let obj = {...acum};
-            obj[contact._id] = {cantidad: cant, lastMessage: lastMsg.content, datetime: lastMsg.datetime};
-            return obj;
+            if(lastMsg){
+                obj[contact._id] = {cantidad: cant, lastMessage: lastMsg.content, datetime: lastMsg.datetime};
+                return obj;
+            }
+            obj[contact._id] = {cantidad: 0, lastMessage: '', datetime: null}
+            
+            
         }, {});
 
         resp.status(200).json({
@@ -814,19 +819,22 @@ exports.blockUser = async (req, resp, next) => {
     }
 }
 
-exports.sendMessage = async (req, resp, next) => {
+exports.changeUserLanguage = async (req, resp, next) => {
+    try {
+        const {userId} = req;
+        const {lang} = req.body;
 
+        const user = await UserModel.findByIdAndUpdate(userId, {language: lang})
+
+        if(!user){
+            const error = new Error("User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        resp.status(200).json({});
+
+    } catch (error) {
+        next(error);
+    }
 }
-
-exports.markMessageAsSeen = async (req, resp, next) => {
-
-}
-
-
-
-/*
-exports.getConectedUsers = async (req, resp, next) => {
-    const users = await UserModel.find({})
-    resp.status(200).json({data: users});
-}
-*/

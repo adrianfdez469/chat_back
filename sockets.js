@@ -23,7 +23,7 @@ module.exports = {
         io.on('connection', socket => {
 
             socket.on('new user', (params) => {
-                
+
                 socket.userId = params.userId;
                 socket.broadcast.emit('new user', {...params, socketId: socket.id});
                 
@@ -42,6 +42,10 @@ module.exports = {
             socket.on('disconnect', async (params) => {
                 socket.broadcast.emit('user disconnect', {socketId: socket.id});
             });
+            socket.on('logout', async (params) => {
+                socket.broadcast.emit('user disconnect', {socketId: socket.id});
+            });
+            
 
             socket.on('request friendship', ({userIdRequester, userIdRequested, token}) => {
 
