@@ -847,7 +847,7 @@ exports.changeUserLanguage = async (req, resp, next) => {
 }
 
 
-exports.changePassword = async (req, resp,next) => {
+exports.changePassword = async (req, resp, next) => {
     try {
         const {userId} = req;
         const {oldPassword, password} = req.body;
@@ -871,6 +871,42 @@ exports.changePassword = async (req, resp,next) => {
 
         resp.status(200).json({
             msg: "Password changed"
+        });
+        
+    } catch (err) {
+        next(err);
+    }
+}
+
+exports.changeAvatar = async (req, resp, next) => {
+    try {
+        const {userId} = req;
+        const {avatar} = req.body;
+        
+        const user = await UserModel.findById(userId);
+        if(!user){
+            const error = new Error("Error: User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        fs.unlink(path.join(__dirname, '..', `public${user.avatarUrl}`), () => {
+            console.log('imagen eliminada');
+        });
+
+        const random = bcrypt.genSaltSync();
+        const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
+        let imageUrl = `/images/avatar-${random}.png`;
+
+        fs.writeFileSync(path.join(__dirname, '..','public', 'images', `avatar-${random}.png`), base64Data, 'base64', function(err) {
+            if(err) imageUrl = null;
+        });
+
+        user.avatarUrl = imageUrl;
+        await user.save();
+
+        resp.status(200).json({
+            avatarUrl: imageUrl
         });
         
     } catch (err) {

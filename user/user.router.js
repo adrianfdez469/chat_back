@@ -26,6 +26,7 @@ router.post('/blockUser', isAuthMiddleware.isAuthMiddleware, UserController.bloc
 
 router.post('/changeUserLanguage', isAuthMiddleware.isAuthMiddleware, UserController.changeUserLanguage);
 router.post('/changePassword', isAuthMiddleware.isAuthMiddleware, UserController.changePassword);
+router.post('/changeAvatar', isAuthMiddleware.isAuthMiddleware, UserController.changeAvatar);
 
 
 
