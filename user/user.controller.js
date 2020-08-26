@@ -890,9 +890,7 @@ exports.changeAvatar = async (req, resp, next) => {
             throw error;
         }
 
-        fs.unlink(path.join(__dirname, '..', `public${user.avatarUrl}`), () => {
-            console.log('imagen eliminada');
-        });
+        fs.unlink(path.join(__dirname, '..', `public${user.avatarUrl}`), () => {});
 
         const random = bcrypt.genSaltSync();
         const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
@@ -911,5 +909,49 @@ exports.changeAvatar = async (req, resp, next) => {
         
     } catch (err) {
         next(err);
+    }
+}
+
+
+exports.editprofile = async (req, resp, next) => {
+    try{
+        const {userId} = req;
+        const errors = validationResult(req);
+        helper.checkValidationResults(errors);
+
+        const {firstName, lastName, email, nickname, gender} = req.body;
+       
+        const exist = await UserModel.findOne({
+            $and: [
+                {email: email},
+                {$nor: [
+                    {_id: userId}
+                ]}
+            ]
+            
+        });
+        helper.checkIfExist(exist, "EXISTS");
+
+        const user = await UserModel.findById(userId);
+        if(!user){
+            const error = new Error("Error: User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        user.nickname = nickname;
+        user.firstName = firstName;
+        user.lastName = lastName || '';
+        user.email = email;
+        user.gender = gender;
+        
+        await user.save();
+
+        return resp.status(201).json({
+            msg:'User edited'
+        });
+
+    } catch(err){
+        return next(err);
     }
 }
