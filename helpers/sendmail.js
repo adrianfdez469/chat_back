@@ -5,7 +5,9 @@ const emailTemplates = {
     'SIGNUP-EN': 1,
     'SIGNUP-ES': 2,
     'RESETPASS-EN': 4,
-    'RESETPASS-ES': 5
+    'RESETPASS-ES': 5,
+    'SHAREAPP-EN': 6,
+    'SHAREAPP-ES': 7
 }
 
 const send = (email, paramsObj, templateId) => {

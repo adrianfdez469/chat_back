@@ -29,6 +29,8 @@ router.post('/changePassword', isAuthMiddleware.isAuthMiddleware, UserController
 router.post('/changeAvatar', isAuthMiddleware.isAuthMiddleware, UserController.changeAvatar);
 router.post('/editprofile', isAuthMiddleware.isAuthMiddleware, [nombreValidator, emailValidator], UserController.editprofile);
 
+router.post('/shareapp', isAuthMiddleware.isAuthMiddleware, [nombreValidator, emailValidator], UserController.shareapp);
+
 
 
 //router.get('/user',UserController.getConectedUsers);

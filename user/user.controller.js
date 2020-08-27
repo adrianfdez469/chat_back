@@ -69,7 +69,7 @@ exports.signUp = async (req, resp, next) => {
 
 exports.activateUser = async (req, resp, next) => {
     try{
-        const {token, language, gender, nickname, avatar} = req.body;
+        const {token, language, gender, nickname, avatar, isUserInvited, password} = req.body;
         
         const decodedToken = jwt.verify(token, config.get('jwtSecret'));
         if(!decodedToken){
@@ -91,18 +91,24 @@ exports.activateUser = async (req, resp, next) => {
             throw error;
         }
 
-        const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
-        let imageUrl = `/images/avatar-${user._id}.png`;
-
-        fs.writeFileSync(path.join(__dirname, '..','public', 'images', `avatar-${user._id}.png`), base64Data, 'base64', function(err) {
-            if(err) imageUrl = null;
-        });
+        if(avatar){
+            const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
+            let imageUrl = `/images/avatar-${user._id}.png`;
+    
+            fs.writeFileSync(path.join(__dirname, '..','public', 'images', `avatar-${user._id}.png`), base64Data, 'base64', function(err) {
+                if(err) imageUrl = null;
+            });
+            user.avatarUrl = imageUrl;
+        }
 
         user.active = true;
         user.language = language;
         user.nickname = nickname;
         user.gender = gender;
-        user.avatarUrl = imageUrl;
+        if(isUserInvited){
+            const hashPass = await bcrypt.hash(password, 12);
+            user.password = hashPass;
+        }
         await user.save();
 
         resp.status(200).json({
@@ -465,10 +471,9 @@ exports.getContactData = async (req, resp, next) => {
                 return obj;
             }
             obj[contact._id] = {cantidad: 0, lastMessage: '', datetime: null}
-            
+            return obj;
             
         }, {});
-
         resp.status(200).json({
             contactsData:  contactsWithMsg
         });
@@ -946,6 +951,91 @@ exports.editprofile = async (req, resp, next) => {
         user.gender = gender;
         
         await user.save();
+
+        return resp.status(201).json({
+            msg:'User edited'
+        });
+
+    } catch(err){
+        return next(err);
+    }
+}
+
+exports.shareapp = async (req, resp, next) => {
+    try{
+        const {userId} = req;
+        const errors = validationResult(req);
+        helper.checkValidationResults(errors);
+
+        const { firstName, email, language, hostname } = req.body;
+       
+        const exist = await UserModel.findOne({
+            $and: [
+                {email: email}
+            ]
+        });
+        helper.checkIfExist(exist, "EXISTS");
+
+        const user = await UserModel.findById(userId);
+        if(!user){
+            const error = new Error("Error: User not found");
+            error.statusCode = 404;
+            throw error;
+        } 
+        
+
+        const dinamicPass = bcrypt.genSaltSync();
+        const newUser = new UserModel({
+            nickname: firstName,
+            firstName: firstName,
+            lastName: '',
+            email: email,
+            password: dinamicPass, // Password aleatorio
+            active: false,
+            language: null,
+            avatarUrl: null,
+            contacts: [
+                {
+                    _id: userId,
+                    contactId: userId,
+                    friendShipStatus: 3
+                }
+            ]
+        });
+        await newUser.save();
+
+        user.contacts.push({
+            _id: newUser._id,
+            contactId: newUser._id,
+            friendShipStatus: 2
+        });
+        await user.save();
+
+        const privateKey = config.get('jwtSecret');
+        const token = jwt.sign({
+            userId: newUser._id.toString(),
+            email: email,
+            random: bcrypt.genSaltSync()
+        }, privateKey);
+
+
+
+        // Envio un correo con la url siguiente:
+        const link = `${hostname}/activateuser/${token}/${firstName}/invited`;
+        
+        const senderName = user.firstName + (user.lastName !== '' ? ' '+user.lastName : '');
+        const tempId = language === 'es'? emailTemplates["SHAREAPP-ES"] : emailTemplates["SHAREAPP-EN"];
+        const paramsObj = {
+            "name": firstName,
+            "sender": senderName,
+            "senderEmail": user.email,
+            "link": link.replace("http://", "").replace("https://") // PONER EL LINK SIN EL HTTPS/HTTPS
+        }
+        send(email, paramsObj, tempId);
+        
+        // Revisar que cuando abra el link lo mande a la pagina de activacion de usuario, donde pueda confurar sus datos adicionales y "ademas poner una nueva contraseña"
+        // Verificar que pasa si se salta la pagina de activacion y trata de registrarse mediante la via convencional
+        // Que pasaria si se le pierde ese link de invitacion?
 
         return resp.status(201).json({
             msg:'User edited'
