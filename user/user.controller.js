@@ -92,10 +92,11 @@ exports.activateUser = async (req, resp, next) => {
         }
 
         if(avatar){
+            const avatarName = `avatar_${user._id}_${new Date().getTime()}.png`;
             const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
-            let imageUrl = `/images/avatar-${user._id}.png`;
+            let imageUrl = `/images/${avatarName}.png`;
     
-            fs.writeFileSync(path.join(__dirname, '..','public', 'images', `avatar-${user._id}.png`), base64Data, 'base64', function(err) {
+            fs.writeFileSync(path.join(__dirname, '..','public', 'images', `${avatarName}.png`), base64Data, 'base64', function(err) {
                 if(err) imageUrl = null;
             });
             user.avatarUrl = imageUrl;
