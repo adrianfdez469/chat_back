@@ -1,4 +1,4 @@
-const MessageModel = require('./messageModel');
+const MessageModel = require('./message.model');
 const ObjectId = require('mongoose').Types.ObjectId;
 
 exports.getMessagesByContact = async (req, resp, next) => {

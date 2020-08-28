@@ -30,6 +30,8 @@ router.post('/changeAvatar', isAuthMiddleware.isAuthMiddleware, UserController.c
 router.post('/editprofile', isAuthMiddleware.isAuthMiddleware, [nombreValidator, emailValidator], UserController.editprofile);
 
 router.post('/shareapp', isAuthMiddleware.isAuthMiddleware, [nombreValidator, emailValidator], UserController.shareapp);
+router.post('/getUserFeedback', isAuthMiddleware.isAuthMiddleware, UserController.getUserFeedback);
+router.post('/saveFeedback', isAuthMiddleware.isAuthMiddleware, UserController.saveFeedback);
 
 
 

@@ -43,7 +43,14 @@ const userSchema = new Schema({
     }],
     blackList: [
         {contactId: {type: Schema.Types.ObjectId, required: true, ref: "User"}}
-    ]
+    ],
+    rating: {
+        design: {type: Number, default: 0},
+        performance: {type: Number, default: 0},
+        usability: {type: Number, default: 0},
+        average: {type: Number, default: 0},
+        comment: {type: String, default: ""}
+    }
 });
 
 

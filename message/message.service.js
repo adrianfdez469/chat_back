@@ -1,4 +1,4 @@
-const MessageModel = require('./messageModel');
+const MessageModel = require('./message.model');
 const getUserIdFromToken = require('../middlewares/isAuth').getUserIdFromToken;
 const ObjectId = require('mongoose').Types.ObjectId;
 

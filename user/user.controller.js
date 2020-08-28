@@ -7,8 +7,8 @@ const path = require('path');
 const ObjectId = require('mongoose').Types.ObjectId;
 
 const helper = require('../helpers/helpers');
-const UserModel = require('./userModel');
-const MessageModel = require('../message/messageModel');
+const UserModel = require('./user.model');
+const MessageModel = require('../message/message.model');
 const {send, emailTemplates} = require('../helpers/sendmail');
 
 exports.signUp = async (req, resp, next) => {
@@ -1032,14 +1032,81 @@ exports.shareapp = async (req, resp, next) => {
             "link": link.replace("http://", "").replace("https://") // PONER EL LINK SIN EL HTTPS/HTTPS
         }
         send(email, paramsObj, tempId);
-        
-        // Revisar que cuando abra el link lo mande a la pagina de activacion de usuario, donde pueda confurar sus datos adicionales y "ademas poner una nueva contraseña"
-        // Verificar que pasa si se salta la pagina de activacion y trata de registrarse mediante la via convencional
-        // Que pasaria si se le pierde ese link de invitacion?
 
         return resp.status(201).json({
             msg:'User edited'
         });
+
+    } catch(err){
+        return next(err);
+    }
+}
+
+exports.getUserFeedback = async (req, resp, next) => {
+    try{
+        const {userId} = req;
+        
+        const user = await UserModel.findById(userId);
+        if(!user){
+            const error = new Error("Error: User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return resp.status(200).json({
+            rating: user.rating
+        });
+
+    } catch(err){
+        return next(err);
+    }
+}
+
+exports.saveFeedback = async (req, resp, next) => {
+    try{
+        const {userId} = req;
+        const { designRating, performaceRating, usabilityRating, comment } = req.body;
+
+        let cant = 0;
+        let sum = 0;
+        let average = 0;
+        
+        if(designRating > 0){
+            cant++;
+            average += designRating;
+        }
+        
+        if(performaceRating > 0){
+            cant++;
+            average += performaceRating;
+        }
+        
+        if(usabilityRating > 0){
+            cant++;
+            average += usabilityRating;
+        }
+
+        if(average > 0){
+            average /= cant;   
+        }
+
+        const user = await UserModel.findByIdAndUpdate(userId, {
+            rating: {
+                design: designRating || 0,
+                performance: performaceRating || 0,
+                usability: usabilityRating || 0,
+                average: average,
+                comment: comment || ""
+            }
+        });
+        if(!user){
+            const error = new Error("Error: User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+        
+
+        return resp.status(200).json({});
 
     } catch(err){
         return next(err);

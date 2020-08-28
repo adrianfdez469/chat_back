@@ -1,6 +1,6 @@
 let io;
 const getUserIdFromToken = require('./middlewares/isAuth').getUserIdFromToken;
-const messageService = require('./message/messageService');
+const messageService = require('./message/message.service');
 
 const validateSocketEvent = (token, senderId) => {
     try {
