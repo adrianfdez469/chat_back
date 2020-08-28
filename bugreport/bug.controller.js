@@ -1,16 +1,15 @@
 const {validationResult} = require('express-validator');
-const BugModel = require('./bug,model');
+const BugModel = require('./bug.model');
 const UserModel = require('../user/user.model');
 const helper = require('../helpers/helpers');
 
 exports.saveBugReport = async (req, resp, next) => {
     try {
-
         const errors = validationResult(req);
         helper.checkValidationResults(errors);
-
+        
         const {userId} = req;
-        const {description} = req.params;
+        const {description} = req.body;
 
         const user = await UserModel.findById(userId);
         if(!user){

@@ -1,9 +1,9 @@
-const  { body } = require('express-validator');
+const  { body, param } = require('express-validator');
 
 const descriptionValidator = body('description')
-                .trim()
-                .isString()
-                .notEmpty({ignore_whitespace: true});
+                //.trim()
+                //.isString()
+                .notEmpty();
 
 
 

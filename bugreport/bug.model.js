@@ -9,8 +9,4 @@ const bugSchema = new Schema({
     state: {type: Number, default: 0} // 0-> Reportado 10->Resuelto
 });
 
-
-
-
 module.exports = mongoose.model("Bug", bugSchema);
-
