@@ -897,11 +897,11 @@ exports.changeAvatar = async (req, resp, next) => {
 
         fs.unlink(path.join(__dirname, '..', `public${user.avatarUrl}`), () => {});
 
-        const random = bcrypt.genSaltSync();
+        const avatarName = `avatar_${userId}_${new Date().getTime()}.png`;
         const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
-        let imageUrl = `/images/avatar-${random}.png`;
+        let imageUrl = `/images/${avatarName}.png`;
 
-        fs.writeFileSync(path.join(__dirname, '..','public', 'images', `avatar-${random}.png`), base64Data, 'base64', function(err) {
+        fs.writeFileSync(path.join(__dirname, '..','public', 'images', avatarName), base64Data, 'base64 ', function(err) {
             if(err) imageUrl = null;
         });
 
