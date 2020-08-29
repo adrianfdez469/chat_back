@@ -2,6 +2,7 @@
     "dev": "true",
     "db":"mongodb://localhost/chatapp",
     "frontEndUrl": "http://localhost:3000",
+    "mail_api_token": "",
     "jwtSecret": "AeR54Tg8uSsW1EDS96f4fR7E3OgCS5TGF39FMOa2",
     "refresh_token_expires": 10080,
     "jwt_token_expires": 15
