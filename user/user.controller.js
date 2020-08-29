@@ -422,7 +422,7 @@ exports.searchFirends = async (req, resp, next) => {
         const userId = req.userId;
         const specificFriend = req.body.friendId;
 
-        const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl').execPopulate();
+        const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
         
         const friends = user.contacts
                 .map(contact => {
@@ -432,7 +432,8 @@ exports.searchFirends = async (req, resp, next) => {
                         contactId: contact._id,
                         nickname: contact.contactId.nickname,
                         email: contact.contactId.email,
-                        avatarUrl: contact.contactId.avatarUrl
+                        avatarUrl: contact.contactId.avatarUrl,
+                        gender: contact.contactId.gender
                     };
                 });
 
