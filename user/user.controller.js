@@ -40,7 +40,7 @@ exports.signUp = async (req, resp, next) => {
         const token = jwt.sign({
             userId: user._id.toString(),
             email: email,
-            random: bcrypt.genSaltSync()
+            random: new Date().getTime()
         }, privateKey);
 
 
@@ -77,7 +77,6 @@ exports.activateUser = async (req, resp, next) => {
             error.statusCode = 403;
             throw error;
         }
-console.log(decodedToken);
 
         const user = await UserModel.findById(decodedToken.userId);
         if(!user){
@@ -147,7 +146,7 @@ exports.forgotPassword = async (req, resp, next) => {
         const token = jwt.sign({
             email: email,
             userId: user._id.toString(),
-            random: bcrypt.genSaltSync(),
+            random: new Date().getTime(),
             resetPass: true
         },privateKey, {
             expiresIn: '3h'
@@ -230,7 +229,7 @@ const getLoginData = user => {
         const jwt_token = 'Bearer ' +  jwt.sign({
             userId: user._id,
             expitationdate: jwt_token_expiry,
-            random: bcrypt.genSaltSync()
+            random: new Date().getTime()
         }, config.get('jwtSecret'), 
         {expiresIn: config.get('jwt_token_expires') * 60}); // Dura 10 minutos   
         
@@ -375,7 +374,7 @@ exports.refreshToken = async (req, resp, next) => {
         const jwt_token = 'Bearer ' + jwt.sign({
             userId: user._id,
             expitationdate: jwt_token_expiry,
-            random: bcrypt.genSaltSync()
+            random: new Date().getTime()
         }, config.get('jwtSecret'), 
         {expiresIn: config.get('jwt_token_expires') * 60});    
         
@@ -1018,7 +1017,7 @@ exports.shareapp = async (req, resp, next) => {
         const token = jwt.sign({
             userId: newUser._id.toString(),
             email: email,
-            random: bcrypt.genSaltSync()
+            random: new Date().getTime()
         }, privateKey);
 
 
