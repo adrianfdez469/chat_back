@@ -903,7 +903,7 @@ exports.changeAvatar = async (req, resp, next) => {
         const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
         let imageUrl = `/images/${avatarName}`;
 
-        fs.writeFileSync(path.join(__dirname, '..','public', 'images', avatarName), base64Data, 'base64 ', function(err) {
+        fs.writeFileSync(path.join(__dirname, '..','public', 'images', avatarName), base64Data, 'base64', function(err) {
             if(err) imageUrl = null;
         });
 
