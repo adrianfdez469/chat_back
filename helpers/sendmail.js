@@ -43,14 +43,16 @@ const send = (email, paramsObj, templateId) => {
         }
     };
     console.log(sendSmtpEmail);
-    if(!config.has("dev")){
+    //if(!config.has("dev")){
         apiInstance.sendTransacEmail(sendSmtpEmail)
             .then(data => {
-                    console.log('Mail sended succsefully.');
+                    console.log('CORREO ENVIADO SATISFACTORIAMENTE');
             }, error => {
+                
+                console.error('ERROR ENVIANDO CORREO');
                 console.error(error);
         });
-    }
+    //}
     
 }
 
