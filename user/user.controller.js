@@ -77,6 +77,7 @@ exports.activateUser = async (req, resp, next) => {
             error.statusCode = 403;
             throw error;
         }
+console.log(decodedToken);
 
         const user = await UserModel.findById(decodedToken.userId);
         if(!user){
