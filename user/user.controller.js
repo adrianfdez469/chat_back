@@ -452,32 +452,35 @@ exports.getContactData = async (req, resp, next) => {
 
         const user = await UserModel.findById(userId);
 
-        const contactsWithMsg = await user.contacts.reduce(async (acum, contact) => {
-            const cant = await MessageModel.countDocuments(
+        const contactsWithMsg = user.contacts.reduce( async (acum, contact) => {
+            const PromiseCant = MessageModel.countDocuments(
                 {
                     userDestiny: ObjectId(userId), 
                     userOrigin: ObjectId(contact._id),
                     readed: false
                 }
             );
-            const lastMsg = await MessageModel.findOne({
+
+            const PrimiseLastMessage = MessageModel.findOne({
                 userDestiny: ObjectId(userId), 
                 userOrigin: ObjectId(contact._id)
             }, {}, {
                 sort: {datetime: -1}
             });
-            
-            let obj = {...acum};
-            if(lastMsg){
-                obj[contact._id] = {cantidad: cant, lastMessage: lastMsg.content, datetime: lastMsg.datetime};
-                return obj;
+
+            const data = await Promise.all([PromiseCant, PrimiseLastMessage])
+               
+            acum = await acum;
+            if(data[1] !== null){
+                acum[contact._id.toString()] = {cantidad: data[0], lastMessage: data[1].content, datetime: data[1].datetime}
             }
-            obj[contact._id] = {cantidad: 0, lastMessage: '', datetime: null}
-            return obj;
-            
+            return acum;
         }, {});
+
+        const data = await contactsWithMsg;
+        
         resp.status(200).json({
-            contactsData:  contactsWithMsg
+            contactsData:  data
         });
 
     } catch (error) {
