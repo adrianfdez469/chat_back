@@ -28,31 +28,24 @@ const send = (email, paramsObj, templateId) => {
 
     sendSmtpEmail = {
         to: [{
-            email: email,
-            //FIRSTNAME: firstname
+            email: email
         }],
-        templateId: templateId,// 1 para ingles, 2 para español
+        templateId: templateId,
         params: paramsObj,
-        
-        /*params: {
-            "name": firstname,
-            "link": link // PONER EL LINK SIN EL HTTPS
-        },*/
         headers: {
             'X-Mailin-custom': 'custom_header_1:custom_value_1|custom_header_2:custom_value_2'
         }
     };
     console.log(sendSmtpEmail);
-    //if(!config.has("dev")){
-        apiInstance.sendTransacEmail(sendSmtpEmail)
-            .then(data => {
-                    console.log('CORREO ENVIADO SATISFACTORIAMENTE');
-            }, error => {
-                
-                console.error('ERROR ENVIANDO CORREO');
-                console.error(error);
-        });
-    //}
+    apiInstance.sendTransacEmail(sendSmtpEmail)
+        .then(data => {
+                console.log('CORREO ENVIADO SATISFACTORIAMENTE');
+        }, error => {
+            
+            console.error('ERROR ENVIANDO CORREO');
+            console.error(error);
+    });
+    
     
 }
 
