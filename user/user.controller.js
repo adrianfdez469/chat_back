@@ -557,7 +557,8 @@ exports.searchContact = async (req, resp, next) => {
                     lastName: user.lastName,
                     email: user.email,
                     nickname: user.nickname,
-                    avatarUrl: user.avatarUrl                    
+                    avatarUrl: user.avatarUrl,
+                    gender: user.gender                  
                 };
                 // Para saber si este posible contacto esta bloqueando al usuario
                 const idx = user.blackList.findIndex(bloked => bloked._id.toString() === userId);
@@ -613,7 +614,8 @@ exports.sendFriendRequest = async (req, resp, next) => {
                 contactId: userId,
                 nickname: userRequested.nickname,
                 email: userRequested.email,
-                avatarUrl: userRequested.avatarUrl
+                avatarUrl: userRequested.avatarUrl,
+                gender: userRequested.gender
             }
         });
 
@@ -1036,7 +1038,14 @@ exports.shareapp = async (req, resp, next) => {
         send(email, paramsObj, tempId);
 
         return resp.status(201).json({
-            msg:'User edited'
+            friend: {
+                friendShipStatusCode: friendShipStatusOptions[2],
+                friendShipStatus: 2,
+                contactId: newUser._id,
+                nickname: newUser.nickname,
+                email: newUser.email,
+                avatarUrl: newUser.avatarUrl
+            }
         });
 
     } catch(err){
