@@ -92,6 +92,7 @@ exports.activateUser = async (req, resp, next) => {
         }
 
         if(avatar){
+            /*
             const avatarName = `avatar_${user._id}_${new Date().getTime()}.png`;
             const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
             let imageUrl = `/images/${avatarName}`;
@@ -100,6 +101,9 @@ exports.activateUser = async (req, resp, next) => {
                 if(err) imageUrl = null;
             });
             user.avatarUrl = imageUrl;
+            */
+
+            user.avatarUrl = avatar;
         }
 
         user.active = true;
@@ -902,6 +906,7 @@ exports.changeAvatar = async (req, resp, next) => {
             throw error;
         }
 
+        /*
         fs.unlink(path.join(__dirname, '..', `public${user.avatarUrl}`), () => {});
 
         const avatarName = `avatar_${userId}_${new Date().getTime()}.png`;
@@ -913,10 +918,15 @@ exports.changeAvatar = async (req, resp, next) => {
         });
 
         user.avatarUrl = imageUrl;
+        */
+        if(/^data:image\/png;base64,/.test(avatar))
+            user.avatarUrl = avatar;
+        
         await user.save();
 
         resp.status(200).json({
-            avatarUrl: imageUrl
+            //avatarUrl: imageUrl
+            avatarUrl: user.avatarUrl
         });
         
     } catch (err) {
