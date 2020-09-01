@@ -92,6 +92,7 @@ exports.activateUser = async (req, resp, next) => {
         }
 
         if(avatar){
+            // Este código comentareado era la forma en la que se guardaban los avatares en el sistema de ficheros
             /*
             const avatarName = `avatar_${user._id}_${new Date().getTime()}.png`;
             const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
@@ -906,6 +907,7 @@ exports.changeAvatar = async (req, resp, next) => {
             throw error;
         }
 
+        // Este código comentareado era la forma en la que se guardaban los avatares en el sistema de ficheros
         /*
         fs.unlink(path.join(__dirname, '..', `public${user.avatarUrl}`), () => {});
 
