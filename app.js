@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 require('./mongoose');
 const path = require('path');
-
+const compression = require('compression');
 //const LoginRouter = require('./login/login.router');
 const UserRouter = require('./user/user.router');
 const MessageRouter = require('./message/message.router');
@@ -11,7 +11,7 @@ const BugRouter = require('./bugreport/bug.router');
 
 const app = express();
 
-
+app.use(compression());
 app.use(express.json());
 
 
