@@ -11,12 +11,24 @@ const BugRouter = require('./bugreport/bug.router');
 
 const app = express();
 
+app.use((req, res, next) => {
+    if (process.env.NODE_ENV === 'production') {
+        if (req.headers.host === 'http://shut-app-pro.herokuapp.com/')
+            return res.redirect(301, 'https://http://shut-app-pro.herokuapp.com/');
+        if (req.headers['x-forwarded-proto'] !== 'https')
+            return res.redirect('https://' + req.headers.host + req.url);
+        else
+            return next();
+    } else
+        return next();
+});
+
 app.use(compression());
 app.use(express.json());
 
 
 
-app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
+//app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 app.use(express.static(path.join(__dirname, 'build')));
 app.use(cors());
 
@@ -24,9 +36,12 @@ app.use('/users', UserRouter);
 app.use('/messages', MessageRouter);
 app.use('/bugs', BugRouter);
 
-app.get('/*', (req,resp) => {
-  resp.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
+
+
+app.get('/*', (req, resp) => {
+        resp.sendFile(path.join(__dirname, 'build', 'index.html'));
+    }
+);
 
 
 // catch 404 and forward to error handler
