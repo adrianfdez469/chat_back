@@ -8,20 +8,12 @@ const compression = require('compression');
 const UserRouter = require('./user/user.router');
 const MessageRouter = require('./message/message.router');
 const BugRouter = require('./bugreport/bug.router');
+const {redirectToHttps} = require('./middlewares/redirectHttps');
 
 const app = express();
 
-app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production') {
-        if (req.headers.host === 'http://shut-app-pro.herokuapp.com/')
-            return res.redirect(301, 'https://http://shut-app-pro.herokuapp.com/');
-        if (req.headers['x-forwarded-proto'] !== 'https')
-            return res.redirect('https://' + req.headers.host + req.url);
-        else
-            return next();
-    } else
-        return next();
-});
+// Middleware para redireccionar siempre a https
+app.use(redirectToHttps);
 
 app.use(compression());
 app.use(express.json());
