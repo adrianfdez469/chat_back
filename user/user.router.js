@@ -3,6 +3,25 @@ const router = express.Router();
 const UserController = require('./user.controller');
 const UserValidator = [nombreValidator, emailValidator, passwordValidator] = require('./user.validator');
 const isAuthMiddleware = require('../middlewares/isAuth');
+const isAuthMiddlewareV2 = require('../middlewares/firebaseAuthMiddleware');
+
+router.post('/test', isAuthMiddlewareV2.isAuthMiddleware, (req, resp, next) => {
+
+    try {
+        
+        const {userId} = req;
+        const {name} = req.body;
+
+        console.log('Todo bien');
+        console.log(userId);
+        console.log(name);
+        
+
+    } catch (error) {
+        console.log(err);
+        next(err);
+    }
+});
 
 router.post('/signup', UserValidator, UserController.signUp);
 router.post('/activate', UserController.activateUser);
