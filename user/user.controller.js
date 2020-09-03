@@ -293,6 +293,12 @@ exports.login = async (req, resp, next) => {
             throw error;
         }
 
+        if(user.active === false){
+            const error = new Error("User not active");
+            error.statusCode = 403;
+            throw error;
+        }
+
         const isEqualPass = bcrypt.compareSync(password, user.password);
         if(!isEqualPass){
             const error = new Error("Not authorized");
