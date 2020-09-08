@@ -1,16 +1,17 @@
-const {validationResult} = require('express-validator');
+/*const {validationResult} = require('express-validator');
 const config = require('config');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const ObjectId = require('mongoose').Types.ObjectId;
+*/
 
 const helper = require('../helpers/helpers');
 const UserModel = require('./user.model');
 const MessageModel = require('../message/message.model');
 const {send, emailTemplates} = require('../helpers/sendmail');
 
+/* 
 exports.signUp = async (req, resp, next) => {
     try{
         
@@ -93,17 +94,6 @@ exports.activateUser = async (req, resp, next) => {
 
         if(avatar){
             // Este código comentareado era la forma en la que se guardaban los avatares en el sistema de ficheros
-            /*
-            const avatarName = `avatar_${user._id}_${new Date().getTime()}.png`;
-            const base64Data = avatar.replace(/^data:image\/png;base64,/, "");
-            let imageUrl = `/images/${avatarName}`;
-    
-            fs.writeFileSync(path.join(__dirname, '..','public', 'images', `${avatarName}`), base64Data, 'base64', function(err) {
-                if(err) imageUrl = null;
-            });
-            user.avatarUrl = imageUrl;
-            */
-
             user.avatarUrl = avatar;
         }
 
@@ -143,10 +133,6 @@ exports.forgotPassword = async (req, resp, next) => {
             throw error;
         }
         // Generar un hash con url que al pinchar redireccione una pagina para cambiar el pass
-
-        
-
-
         const privateKey = config.get('jwtSecret');
         const token = jwt.sign({
             email: email,
@@ -409,7 +395,7 @@ exports.refreshToken = async (req, resp, next) => {
     }
 }
 
-
+*/
 const friendShipStatusOptions = {
     1: "ACEPTED",
     2: "REQUESTED",
@@ -430,7 +416,8 @@ const friendShipStatusOptions = {
 
 exports.searchFirends = async (req, resp, next) => {
     try {
-        const userId = req.userId;
+        const {user_id:userId} = req.firebaseUser;
+
         const specificFriend = req.body.friendId;
 
         const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
@@ -459,22 +446,23 @@ exports.searchFirends = async (req, resp, next) => {
 
 exports.getContactData = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        
+        const {user_id:userId} = req.firebaseUser;
 
         const user = await UserModel.findById(userId);
 
         const contactsWithMsg = user.contacts.reduce( async (acum, contact) => {
             const PromiseCant = MessageModel.countDocuments(
                 {
-                    userDestiny: ObjectId(userId), 
-                    userOrigin: ObjectId(contact._id),
+                    userDestiny: userId, 
+                    userOrigin: contact._id,
                     readed: false
                 }
             );
 
             const PrimiseLastMessage = MessageModel.findOne({
-                userDestiny: ObjectId(userId), 
-                userOrigin: ObjectId(contact._id)
+                userDestiny: userId, 
+                userOrigin: contact._id
             }, {}, {
                 sort: {datetime: -1}
             });
@@ -501,7 +489,7 @@ exports.getContactData = async (req, resp, next) => {
 
 exports.getFriendById = async (req, resp, next) => {
     try {
-        const userId = req.userId;
+        const {user_id:userId} = req.firebaseUser;
         const {friendId} = req.body;
 
         const user = await UserModel.findById(userId);
@@ -536,13 +524,12 @@ exports.getFriendById = async (req, resp, next) => {
 exports.searchContact = async (req, resp, next) => {
     try {
         
-        const userId = req.userId;
+        const {user_id:userId} = req.firebaseUser;
         const {stringPattern, start, limit} = req.body;
         const users = await UserModel
             .find({
                 $and: [
                     {email: {"$regex": stringPattern, "$options": "i"}},
-                    {active: true},
                     {$nor: [
                         {_id: userId}
                     ]}
@@ -595,7 +582,8 @@ exports.searchContact = async (req, resp, next) => {
 
 exports.sendFriendRequest = async (req, resp, next) => {
     try {
-        const senderId = req.userId;
+        
+        const {user_id:senderId} = req.firebaseUser;
         const {userId} = req.body;
 
 
@@ -606,11 +594,18 @@ exports.sendFriendRequest = async (req, resp, next) => {
             throw error;
         }
 
-        userRequested.contacts.push({
-            _id: senderId,
-            contactId: senderId,
-            friendShipStatus: 3
-        });
+
+        const idx = userRequested.contacts.findIndex(contact => contact._id === senderId);
+        if(idx >= 0){
+            userRequested.contacts[idx].friendShipStatus = 3;
+        }else{
+            userRequested.contacts.push({
+                _id: senderId,
+                contactId: senderId,
+                friendShipStatus: 3
+            });
+        }
+
         await userRequested.save();
         
         const userSender = await UserModel.findById(senderId);
@@ -642,7 +637,8 @@ exports.sendFriendRequest = async (req, resp, next) => {
 // Ver que hacer si te bloquea antes de aceptar la solicitud (Probar por la app)
 exports.acceptFriendRequest = async (req, resp, next) => {
     try {
-        const userId = req.userId;
+        
+        const {user_id:userId} = req.firebaseUser;
         const {acceptedUserId} = req.body;
 
         const acceptedUser = await UserModel.findById(acceptedUserId);
@@ -698,7 +694,8 @@ exports.acceptFriendRequest = async (req, resp, next) => {
 */
 exports.declineFriendRequest = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        
+        const {user_id:userId} = req.firebaseUser;
         const {declinedUserId} = req.body;
 
         const declinedUser = await UserModel.findById(declinedUserId);
@@ -721,19 +718,19 @@ exports.declineFriendRequest = async (req, resp, next) => {
             error.statusCode = 404;
             throw error;
         }
-        const user_ctact_index = user.contacts.findIndex(contact => contact._id.toString() === declinedUserId.toString());
+        const user_ctact_index = user.contacts.findIndex(contact => contact._id === declinedUserId);
 
         //Situacion 1: user->envio solicitud, y estando esta en espera la cancela        
         if(user.contacts[user_ctact_index].friendShipStatus === 2 && declinedUser.contacts[declined_user_ctact_index].friendShipStatus === 3){
             // Borrar contactos de los dos usuarios
             await UserModel.findByIdAndUpdate(userId, {
                 $pull:{
-                    contacts: {_id: new ObjectId(declinedUserId)}
+                    contacts: {_id: declinedUserId}
                 }
             });
             await UserModel.findByIdAndUpdate(declinedUserId, {
                 $pull:{
-                    contacts: {_id: new ObjectId(userId)}
+                    contacts: {_id:userId}
                 }
             });
 
@@ -747,7 +744,7 @@ exports.declineFriendRequest = async (req, resp, next) => {
             // Del usuario que recibio la solicitud borro el contacto del que se la envio, y del usuario que encio la solicitud cambio el estado a DECLINED
             await UserModel.findByIdAndUpdate(userId, {
                 $pull:{
-                    contacts: {_id: new ObjectId(declinedUserId)}
+                    contacts: {_id: declinedUserId}
                 }
             });
             declinedUser.contacts[declined_user_ctact_index].friendShipStatus = 4;
@@ -766,7 +763,7 @@ exports.declineFriendRequest = async (req, resp, next) => {
 
 exports.deleteContact = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        const {user_id:userId} = req.firebaseUser;
         const {deletedUserId} = req.body;
 
         if(!deletedUserId){
@@ -777,7 +774,7 @@ exports.deleteContact = async (req, resp, next) => {
 
         const user = await UserModel.findByIdAndUpdate(userId, {
             $pull:{
-                contacts: {_id: new ObjectId(deletedUserId)}
+                contacts: {_id: deletedUserId}
             }
         });
         if(!user){
@@ -810,15 +807,15 @@ exports.deleteContact = async (req, resp, next) => {
 */
 exports.blockUser = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        const {user_id:userId} = req.firebaseUser;
         const {blokedUserId} = req.body;
 
         const user = await UserModel.findByIdAndUpdate(userId, {
             $pull:{
-                contacts: {_id: new ObjectId(blokedUserId)}
+                contacts: {_id: blokedUserId}
             },
             $push: {
-                blackList: {_id: new ObjectId(blokedUserId), contactId: new ObjectId(blokedUserId)}
+                blackList: {_id: blokedUserId, contactId: blokedUserId}
             }
         });
         if(!user){
@@ -851,7 +848,7 @@ exports.blockUser = async (req, resp, next) => {
 
 exports.changeUserLanguage = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        const {user_id:userId} = req.firebaseUser;
         const {lang} = req.body;
 
         const user = await UserModel.findByIdAndUpdate(userId, {language: lang})
@@ -869,7 +866,7 @@ exports.changeUserLanguage = async (req, resp, next) => {
     }
 }
 
-
+/*
 exports.changePassword = async (req, resp, next) => {
     try {
         const {userId} = req;
@@ -899,14 +896,15 @@ exports.changePassword = async (req, resp, next) => {
     } catch (err) {
         next(err);
     }
-}
+}*/
 
 exports.changeAvatar = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        //const {userId} = req;
+        const {firebaseUser} = req;
         const {avatar} = req.body;
-        
-        const user = await UserModel.findById(userId);
+
+        const user = await UserModel.findById(firebaseUser.user_id);
         if(!user){
             const error = new Error("Error: User not found");
             error.statusCode = 404;
@@ -927,8 +925,11 @@ exports.changeAvatar = async (req, resp, next) => {
 
         user.avatarUrl = imageUrl;
         */
-        if(/^data:image\/png;base64,/.test(avatar))
+       
+        if(/^data:image\/png;base64,/.test(avatar) || /^http/.test(avatar))
             user.avatarUrl = avatar;
+
+        
         
         await user.save();
 
@@ -945,9 +946,7 @@ exports.changeAvatar = async (req, resp, next) => {
 
 exports.editprofile = async (req, resp, next) => {
     try{
-        const {userId} = req;
-        const errors = validationResult(req);
-        helper.checkValidationResults(errors);
+        const {user_id:userId} = req.firebaseUser;
 
         const {firstName, lastName, email, nickname, gender} = req.body;
        
@@ -985,7 +984,7 @@ exports.editprofile = async (req, resp, next) => {
         return next(err);
     }
 }
-
+/*
 exports.shareapp = async (req, resp, next) => {
     try{
         const {userId} = req;
@@ -1072,11 +1071,11 @@ exports.shareapp = async (req, resp, next) => {
     } catch(err){
         return next(err);
     }
-}
+}*/
 
 exports.getUserFeedback = async (req, resp, next) => {
     try{
-        const {userId} = req;
+        const {user_id:userId} = req.firebaseUser;
         
         const user = await UserModel.findById(userId);
         if(!user){
@@ -1096,7 +1095,7 @@ exports.getUserFeedback = async (req, resp, next) => {
 
 exports.saveFeedback = async (req, resp, next) => {
     try{
-        const {userId} = req;
+        const {user_id:userId} = req.firebaseUser;
         const { designRating, performaceRating, usabilityRating, comment } = req.body;
 
         let cant = 0;
@@ -1142,5 +1141,88 @@ exports.saveFeedback = async (req, resp, next) => {
 
     } catch(err){
         return next(err);
+    }
+}
+
+exports.getUserData = async (req, resp, next) => {
+
+    try {
+        
+        const {firebaseUser} = req;
+        const {language} = req.body;
+        //console.log(firebaseUser);
+        
+        // Buscar si el usuario existe en nuestra BD
+        // Si no existe guardar datos como user_id, correo, picture, nombre
+        const user = await UserModel.findById(firebaseUser.user_id);
+
+        if(!user){
+            const nameArray = (firebaseUser.name) ? firebaseUser.name.split(' ') : ['', ''];
+            const newUser = new UserModel({
+                _id: firebaseUser.user_id,
+                nickname: firebaseUser.name ? firebaseUser.name : '',
+                firstName: nameArray[0],
+                lastName: nameArray.filter((it, idx) => idx > 0).join(' '),
+                email: firebaseUser.email ? firebaseUser.email : '',
+                active: !!firebaseUser.email_verified,
+                language: language,
+                avatarUrl: firebaseUser.picture && firebaseUser.picture,
+                oauthAvatarUrl: firebaseUser.picture && firebaseUser.picture
+            });
+            await newUser.save();
+            resp.status(201).json({
+                user: {
+                    _id: newUser._id.toString(),
+                    nickname: newUser.nickname,
+                    firstName: newUser.firstName,
+                    lastName: newUser.lastName,
+                    email: newUser.email,
+                    gender: newUser.gender,
+                    language: newUser.language,
+                    avatarUrl: newUser.avatarUrl
+                }
+            });
+        }else{
+            let respUserObj = {};
+            if(firebaseUser.name){
+                const nameArray = (firebaseUser.name) ? firebaseUser.name.split(' ') : ['', ''];
+                if(!user.firstName || user.firstName === '' || user.firstName !== nameArray[0]){
+                    user.firstName = nameArray[0];
+                }
+                const lastNames = nameArray.filter((it, idx) => idx > 0).join(' ');
+                if(!user.lastName || user.lastName === '' || user.lastName !== lastNames ){
+                    user.lastName = lastNames;
+                }
+            }
+                                    
+            if(firebaseUser.picture && user.oauthAvatarUrl !== firebaseUser.picture){
+                user.oauthAvatarUrl = firebaseUser.picture;
+                respUserObj.avatarChanged = true;
+                respUserObj.oauthAvatarUrl =  firebaseUser.picture;
+            }
+            if(user.isModified()){
+                await user.save();
+            }
+
+            respUserObj = {...respUserObj, 
+                _id: user._id.toString(),
+                nickname: user.nickname,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                gender: user.gender,
+                language: user.language,
+                avatarUrl: user.avatarUrl
+            }
+
+            resp.status(200).json({
+                user: respUserObj
+            });
+        }
+        
+
+    } catch (err) {
+        console.log(err);
+        next(err);
     }
 }

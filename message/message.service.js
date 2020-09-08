@@ -1,10 +1,11 @@
 const MessageModel = require('./message.model');
-const getUserIdFromToken = require('../middlewares/isAuth').getUserIdFromToken;
+const getUserIdFromToken = require('../middlewares/firebaseAuthMiddleware').getUserIdFromToken;
+
 const ObjectId = require('mongoose').Types.ObjectId;
 
 exports.sendMessage = async (content, userOriginId, userDestinyId, token) => {
     try {
-        const userIdFromToken = getUserIdFromToken(token);
+        const userIdFromToken = await getUserIdFromToken(token);
         if(userOriginId.toString() !== userIdFromToken.toString()){
             throw Error(`El idusuario del token (${userIdFromToken}) no coincide con el que se recive por parametros (${userOriginId})`);
         }
@@ -28,18 +29,19 @@ exports.sendMessage = async (content, userOriginId, userDestinyId, token) => {
 
 exports.markMessageAsReaded = async (userId, contactId, token) => {
     try {
+        
         if(!userId || !contactId || !token){
             return false;
         }
 
-        const userIdFromToken = getUserIdFromToken(token);
-        if(userId.toString() !== userIdFromToken.toString()){
+        const userIdFromToken = await getUserIdFromToken(token);
+        if(userId !== userIdFromToken.toString()){
             throw Error(`El idusuario del token (${userIdFromToken}) no coincide con el que se recive por parametros (${userOriginId})`);
         }
 
         await MessageModel.updateMany({
-            userOrigin: ObjectId(contactId),
-            userDestiny: ObjectId(userId),
+            userOrigin: contactId,
+            userDestiny: userId,
             readed: false
         }, {
             readed: true

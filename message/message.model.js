@@ -6,8 +6,8 @@ const messageSchema = new Schema({
     datetime: {type: Date, required: true},
     readed: {type: Boolean, default: false},
     content: {type: String},
-    userOrigin: {type: Schema.Types.ObjectId, ref: 'User', required: true},
-    userDestiny: {type: Schema.Types.ObjectId, ref: 'User', required: true}
+    userOrigin: {type: String, ref: 'User', required: true},
+    userDestiny: {type: String, ref: 'User', required: true}
 });
 
 module.exports = mongoose.model("Message", messageSchema);

@@ -8,7 +8,7 @@ exports.saveBugReport = async (req, resp, next) => {
         const errors = validationResult(req);
         helper.checkValidationResults(errors);
         
-        const {userId} = req;
+        const {user_id:userId} = req.firebaseUser;
         const {description} = req.body;
 
         const user = await UserModel.findById(userId);

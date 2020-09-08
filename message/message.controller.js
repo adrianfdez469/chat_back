@@ -1,15 +1,15 @@
 const MessageModel = require('./message.model');
-const ObjectId = require('mongoose').Types.ObjectId;
 
 exports.getMessagesByContact = async (req, resp, next) => {
     try {
-        const {userId} = req;
+        const {user_id:userId} = req.firebaseUser;
+
         const {contactId} = req.body;
         
         const messages = await MessageModel.find({
             $or: [
-                {userOrigin: ObjectId(userId), userDestiny: ObjectId(contactId)},
-                {userOrigin: ObjectId(contactId), userDestiny: ObjectId(userId)}
+                {userOrigin: userId, userDestiny: contactId},
+                {userOrigin: contactId, userDestiny: userId}
             ]
         });
 

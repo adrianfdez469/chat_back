@@ -1,12 +1,14 @@
 let io;
-const getUserIdFromToken = require('./middlewares/isAuth').getUserIdFromToken;
+const getUserIdFromToken = require('./middlewares/firebaseAuthMiddleware').getUserIdFromToken;
+
+
 const messageService = require('./message/message.service');
 
-const validateSocketEvent = (token, senderId) => {
+const validateSocketEvent = async (token, senderId) => {
     try {
 
-        const userIdToken = getUserIdFromToken(token);
-        if(userIdToken.toString() !== senderId){
+        const userIdToken = await getUserIdFromToken(token);
+        if(userIdToken !== senderId){
             throw Error(`El idusuario del token (${userIdToken}) no coincide con el que se recive por parametros (${senderId})`);
         }else{
             return true;
@@ -61,10 +63,10 @@ module.exports = {
             });
             
 
-            socket.on('request friendship', ({userIdRequester, userIdRequested, token}) => {
-
-                const isValid = validateSocketEvent(token, userIdRequester);
-
+            socket.on('request friendship',async ({userIdRequester, userIdRequested, token}) => {
+                
+                const isValid = await validateSocketEvent(token, userIdRequester);
+                
                 if(isValid){
                     socket.broadcast.emit('requested friendship', {userIdRequester, userIdRequested, socketIdRequester: socket.id});     
                     
@@ -133,7 +135,6 @@ module.exports = {
             });
 
             socket.on('read messages', async ({userId, contactId, notifyTo, token}) => {
-                
                 const isValid = await messageService.markMessageAsReaded(userId, contactId, token);
                 if(isValid){
                     

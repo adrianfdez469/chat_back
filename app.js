@@ -30,10 +30,12 @@ app.use('/bugs', BugRouter);
 
 
 
+/*
+Front end va estar en las github pages
 app.get('/*', (req, resp) => {
         resp.sendFile(path.join(__dirname, 'build', 'index.html'));
     }
-);
+);*/
 
 
 // catch 404 and forward to error handler
