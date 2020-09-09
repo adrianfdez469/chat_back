@@ -2,7 +2,8 @@ const admin = require("firebase-admin");
 const config = require('config');
 
 let serviceAccount;
-if(config.has('firebaseServiceAccount')){
+
+if(config.get('dev') === 'true'){
     serviceAccount = config.get('firebaseServiceAccount');
 
 }else{
@@ -19,6 +20,7 @@ if(config.has('firebaseServiceAccount')){
         "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-l7qxu%40shut-up-pro.iam.gserviceaccount.com"
       }
 }
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
