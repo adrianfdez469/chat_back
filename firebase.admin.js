@@ -1,13 +1,7 @@
 const admin = require("firebase-admin");
 const config = require('config');
 
-let serviceAccount;
-
-if(!process.env.NODE_ENV || process.env.NODE_ENV !== 'production'){
-    serviceAccount = config.get('firebaseServiceAccount');
-
-}else{
-    serviceAccount = {
+const serviceAccount = {
         "type": "service_account",
         "project_id": "shut-up-pro",
         "private_key_id": config.get('firebase_admin_private_key_id'),
@@ -19,7 +13,6 @@ if(!process.env.NODE_ENV || process.env.NODE_ENV !== 'production'){
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-l7qxu%40shut-up-pro.iam.gserviceaccount.com"
       }
-}
 
 
 admin.initializeApp({

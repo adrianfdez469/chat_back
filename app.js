@@ -8,7 +8,7 @@ const compression = require('compression');
 const UserRouter = require('./user/user.router');
 const MessageRouter = require('./message/message.router');
 const BugRouter = require('./bugreport/bug.router');
-const {redirectToHttps} = require('./middlewares/redirectHttps');
+//const {redirectToHttps} = require('./middlewares/redirectHttps');
 
 const app = express();
 
