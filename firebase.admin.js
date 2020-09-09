@@ -3,7 +3,7 @@ const config = require('config');
 
 let serviceAccount;
 
-if(config.get('dev') === 'true'){
+if(!process.env.NODE_ENV || process.env.NODE_ENV !== 'production'){
     serviceAccount = config.get('firebaseServiceAccount');
 
 }else{
