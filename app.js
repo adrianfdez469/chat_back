@@ -13,7 +13,7 @@ const {redirectToHttps} = require('./middlewares/redirectHttps');
 const app = express();
 
 // Middleware para redireccionar siempre a https
-app.use(redirectToHttps);
+//app.use(redirectToHttps); Esto no lo necesito ahora porque abro el servicio mediante github pages que por defecto son https
 
 app.use(compression());
 app.use(express.json());
