@@ -6,5 +6,5 @@
     "refresh_token_expires": "REFRESH_TOKEN_EXPIRES_MINUTES",
     "jwt_token_expires": "JWT_TOKEN_EXPIRES_MINUTES",
     "firebase_admin_private_key_id": "FIREBASE_ADMIN_PRIVATE_KEY_ID",
-    "firebase_admin_private_key": "FIREBASE_ADMIN_PRIVATE_KEY",
+    "firebase_admin_private_key": "FIREBASE_ADMIN_PRIVATE_KEY"
 }
