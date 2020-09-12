@@ -423,9 +423,9 @@ exports.searchFirends = async (req, resp, next) => {
         //const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
         
         const user = await UserModel.findById(userId);
-        await user.populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
-
-        if(user.contacts.length > 0){
+        
+        if(user && user.contacts && user.contacts.length > 0){
+            await user.populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
             const friends = user.contacts
                     .map(contact => {
                         return {
@@ -460,37 +460,44 @@ exports.getContactData = async (req, resp, next) => {
         const {user_id:userId} = req.firebaseUser;
 
         const user = await UserModel.findById(userId);
+        if(user && user.contacts && user.contacts.length > 0){
 
-        const contactsWithMsg = user.contacts.reduce( async (acum, contact) => {
-            const PromiseCant = MessageModel.countDocuments(
-                {
+            
+            const contactsWithMsg = user.contacts.reduce( async (acum, contact) => {
+                const PromiseCant = MessageModel.countDocuments(
+                    {
+                        userDestiny: userId, 
+                        userOrigin: contact._id,
+                        readed: false
+                    }
+                );
+
+                const PrimiseLastMessage = MessageModel.findOne({
                     userDestiny: userId, 
-                    userOrigin: contact._id,
-                    readed: false
+                    userOrigin: contact._id
+                }, {}, {
+                    sort: {datetime: -1}
+                });
+
+                const data = await Promise.all([PromiseCant, PrimiseLastMessage])
+                
+                acum = await acum;
+                if(data[1] !== null){
+                    acum[contact._id.toString()] = {cantidad: data[0], lastMessage: data[1].content, datetime: data[1].datetime}
                 }
-            );
+                return acum;
+            }, {});
 
-            const PrimiseLastMessage = MessageModel.findOne({
-                userDestiny: userId, 
-                userOrigin: contact._id
-            }, {}, {
-                sort: {datetime: -1}
+            const data = await contactsWithMsg;
+            
+            resp.status(200).json({
+                contactsData:  data
             });
-
-            const data = await Promise.all([PromiseCant, PrimiseLastMessage])
-               
-            acum = await acum;
-            if(data[1] !== null){
-                acum[contact._id.toString()] = {cantidad: data[0], lastMessage: data[1].content, datetime: data[1].datetime}
-            }
-            return acum;
-        }, {});
-
-        const data = await contactsWithMsg;
-        
-        resp.status(200).json({
-            contactsData:  data
-        });
+        }else{
+            resp.status(200).json({
+                contactsData:  {}
+            });
+        }
 
     } catch (error) {
         next(error);
