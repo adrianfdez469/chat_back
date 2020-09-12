@@ -420,24 +420,34 @@ exports.searchFirends = async (req, resp, next) => {
 
         const specificFriend = req.body.friendId;
 
-        const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
+        //const user = await (await UserModel.findById(userId)).populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
         
-        const friends = user.contacts
-                .map(contact => {
-                    return {
-                        friendShipStatusCode: friendShipStatusOptions[contact.friendShipStatus],
-                        friendShipStatus: contact.friendShipStatus,
-                        contactId: contact._id,
-                        nickname: contact.contactId.nickname,
-                        email: contact.contactId.email,
-                        avatarUrl: contact.contactId.avatarUrl,
-                        gender: contact.contactId.gender
-                    };
-                });
+        const user = await UserModel.findById(userId);
+        await user.populate('contacts.contactId','email nickname avatarUrl gender').execPopulate();
 
-        resp.status(200).json({
-            friends: friends
-        })
+        if(user.contacts.length > 0){
+            const friends = user.contacts
+                    .map(contact => {
+                        return {
+                            friendShipStatusCode: friendShipStatusOptions[contact.friendShipStatus],
+                            friendShipStatus: contact.friendShipStatus,
+                            contactId: contact._id,
+                            nickname: contact.contactId.nickname,
+                            email: contact.contactId.email,
+                            avatarUrl: contact.contactId.avatarUrl,
+                            gender: contact.contactId.gender
+                        };
+                    });
+    
+            resp.status(200).json({
+                friends: friends
+            })
+        }else{
+            resp.status(200).json({
+                friends: []
+            })
+        }
+        
 
     } catch (error) {
         next(error);
@@ -1154,6 +1164,7 @@ exports.getUserData = async (req, resp, next) => {
         
         // Buscar si el usuario existe en nuestra BD
         // Si no existe guardar datos como user_id, correo, picture, nombre
+        console.log(firebaseUser);
         const user = await UserModel.findById(firebaseUser.user_id);
 
         if(!user){
