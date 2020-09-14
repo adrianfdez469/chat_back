@@ -1175,6 +1175,18 @@ exports.getUserData = async (req, resp, next) => {
         const user = await UserModel.findById(firebaseUser.user_id);
 
         if(!user){
+
+            // Realizar validacion de que no exista el mismo correo
+            const userEmail = await UserModel.findOne({email: firebaseUser.email});
+            if(userEmail){
+                const err = new Error('EXISTE UN USUARIO CON EL MISMO EMAIL PERO ID DIFERENTE');
+                console.log('User in DB: ');
+                console.log(userEmail);
+                console.log('Firebase user: ');
+                console.log(firebaseUser);
+                throw err;
+            }
+
             const nameArray = (firebaseUser.name) ? firebaseUser.name.split(' ') : ['', ''];
             const newUser = new UserModel({
                 _id: firebaseUser.user_id,
